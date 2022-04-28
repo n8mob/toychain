@@ -1,5 +1,7 @@
 from unittest import TestCase
 
+from cryptography.exceptions import InvalidSignature
+from cryptography.hazmat.primitives import serialization
 from cryptography.hazmat.primitives.asymmetric import ec
 from owner import Owner
 from toycoin import ToyCoin
@@ -29,3 +31,27 @@ class TestToyCoin(TestCase):
 
         self.assertEqual(2, len(self.unit_under_test.chain))
         self.assertEqual(self.owner1, self.unit_under_test.last_owner())
+
+    def test_verify_initial_transaction(self):
+        initial_transaction = self.unit_under_test.chain[0]
+
+        self.owner0.public_key().verify(
+            initial_transaction.signature,
+            self.unit_under_test.data,
+            self.unit_under_test.signature_algorithm,
+        )
+
+    def test_verify_signature_after_transfer(self):
+        self.unit_under_test.transfer(self.owner1)
+        expected_data = self.unit_under_test.chain[0].transaction_hash + self.owner1.public_key().public_bytes(
+            encoding=serialization.Encoding.PEM,
+            format=serialization.PublicFormat.SubjectPublicKeyInfo
+        )
+
+        transaction = self.unit_under_test.last_transaction()
+
+        self.owner0.public_key().verify(
+            transaction.signature,
+            expected_data,
+            self.unit_under_test.signature_algorithm
+        )
