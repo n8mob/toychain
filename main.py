@@ -4,13 +4,16 @@ from cryptography.hazmat.primitives.asymmetric.ec import ECDSA, EllipticCurvePri
 
 ellipticCurve = ec.SECP256K1()
 privateKey: EllipticCurvePrivateKey = ec.generate_private_key(ellipticCurve)
-ecdsa = ECDSA(hashes.SHA256())
+signature_algorithm = ECDSA(hashes.SHA256())
 
 # Press the green button in the gutter to run the script.
 if __name__ == '__main__':
     for s in [b'hello', b'hello!', b'hellp', b'zzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzz']:
-        signed = privateKey.sign(s, ecdsa).hex()
-        print(f'signing {s}\t{int(len(signed) / 2)} bytes: {signed}')
+        signed = privateKey.sign(s, signature_algorithm)
+        print(f'signing {s}\t{int(len(signed) / 2)} bytes: {signed.hex()}')
+        print(f'verifying {signed.hex()}:')
+
+        privateKey.public_key().verify(signed, s, signature_algorithm)
 
 
 # TODO define a transaction
