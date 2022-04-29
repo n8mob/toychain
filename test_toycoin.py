@@ -1,6 +1,5 @@
 from unittest import TestCase
 
-from cryptography.hazmat.primitives import serialization
 from cryptography.hazmat.primitives.asymmetric import ec
 from owner import Owner
 from toycoin import ToyCoin
@@ -43,10 +42,7 @@ class TestToyCoin(TestCase):
 
     def test_verify_signature_after_transfer(self):
         self.unit_under_test.transfer(self.owner1)
-        expected_data = self.unit_under_test.chain[0].transaction_hash + self.owner1.public_key().public_bytes(
-            encoding=serialization.Encoding.PEM,
-            format=serialization.PublicFormat.SubjectPublicKeyInfo
-        )
+        expected_data = self.unit_under_test.chain[0].transaction_hash + self.owner1.default_public_bytes()
 
         transaction = self.unit_under_test.last_transaction()
 
@@ -59,15 +55,20 @@ class TestToyCoin(TestCase):
     def test_verify_with_previous_owner_from_transaction(self):
         self.unit_under_test.transfer(self.owner1)
 
-        expected_data = self.unit_under_test.chain[0].transaction_hash + self.owner1.public_key().public_bytes(
-            encoding=serialization.Encoding.PEM,
-            format=serialization.PublicFormat.SubjectPublicKeyInfo
-        )
+        expected_data = self.unit_under_test.chain[0].transaction_hash + self.owner1.default_public_bytes()
 
-        transaction = self.unit_under_test.last_transaction()
+        transaction = self.unit_under_test.chain[1]
 
         transaction.previous_owner.public_key().verify(
             transaction.signature,
             expected_data,
             self.unit_under_test.signature_algorithm
         )
+
+    def test_verify_link(self):
+        self.unit_under_test.transfer(self.owner1)
+
+        t0 = self.unit_under_test.chain[0]
+        t1 = self.unit_under_test.chain[1]
+
+        self.unit_under_test.verify_link(t0, t1)

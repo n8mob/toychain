@@ -1,14 +1,13 @@
 from typing import List
 
-from cryptography.hazmat.primitives import serialization
 from cryptography.hazmat.primitives.asymmetric.ec import ECDSA, EllipticCurveSignatureAlgorithm
 from cryptography.hazmat.primitives.hashes import SHA256, HashAlgorithm, Hash
 
-DEFAULT_HASH_ALGORITHM = SHA256()
-DEFAULT_SIGNATURE_ALGORITHM = ECDSA
-
 from owner import Owner
 from transaction import Transaction
+
+DEFAULT_HASH_ALGORITHM = SHA256()
+DEFAULT_SIGNATURE_ALGORITHM = ECDSA
 
 
 class ToyCoin:
@@ -40,12 +39,10 @@ class ToyCoin:
     def last_owner(self) -> Owner: return self.last_transaction().current_owner
 
     def transfer(self, next_owner: Owner) -> None:
-        data_to_hash = self.last_transaction().transaction_hash + next_owner.public_key().public_bytes(
-            encoding=serialization.Encoding.PEM,
-            format=serialization.PublicFormat.SubjectPublicKeyInfo
-        )
+        previous_transaction = self.last_transaction()
+        data_to_sign = previous_transaction.transaction_hash + next_owner.default_public_bytes()
 
-        signed_data = self.last_owner().private_key.sign(data_to_hash, self.signature_algorithm)
+        signed_data = previous_transaction.current_owner.private_key.sign(data_to_sign, self.signature_algorithm)
         hasher = Hash(self.signature_algorithm.algorithm)
         hasher.update(signed_data)
         hashed_data = hasher.finalize()
@@ -54,4 +51,13 @@ class ToyCoin:
             Transaction(
                 signed_data, hashed_data, self.last_owner(), next_owner
             )
+        )
+
+    def verify_link(self, t1: Transaction, t2: Transaction):
+        expected_data = t1.transaction_hash + t2.previous_owner.default_public_bytes()
+
+        t1.current_owner.public_key().verify(
+            t1.signature,
+            expected_data,
+            self.signature_algorithm
         )
