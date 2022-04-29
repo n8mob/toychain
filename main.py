@@ -16,6 +16,7 @@ if __name__ == '__main__':
         privateKey.public_key().verify(signed, s, signature_algorithm)
 
 
-# TODO define a transaction
-# TODO serialize the transaction
-# TODO sign the serialized transaction
+# DONE define a transaction
+# WON'T serialize the transaction
+# DONE hash the transaction
+# DONE sign the hash

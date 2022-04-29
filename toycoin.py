@@ -54,10 +54,10 @@ class ToyCoin:
         )
 
     def verify_link(self, t1: Transaction, t2: Transaction):
-        expected_data = t1.transaction_hash + t2.previous_owner.default_public_bytes()
+        expected_data = t1.transaction_hash + t2.current_owner.default_public_bytes()
 
         t1.current_owner.public_key().verify(
-            t1.signature,
+            t2.signature,
             expected_data,
             self.signature_algorithm
         )

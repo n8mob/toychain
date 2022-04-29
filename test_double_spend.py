@@ -1,5 +1,6 @@
 from unittest import TestCase
 
+from cryptography.exceptions import InvalidSignature
 from cryptography.hazmat.primitives.asymmetric import ec
 from cryptography.hazmat.primitives.asymmetric.ec import ECDSA
 from cryptography.hazmat.primitives.hashes import SHA256, Hash
@@ -46,3 +47,12 @@ class TestDoubleSpend(TestCase):
         t1 = defraud(t0, self.duplicitous_owner, self.recipient1)
         t2 = defraud(t0, self.duplicitous_owner, self.recipient2)
 
+        try:
+            self.coin.verify_link(t0, t1)
+        except InvalidSignature:
+            self.fail("Double spend is not handled and therefore this should not throw")
+
+        try:
+            self.coin.verify_link(t0, t2)
+        except InvalidSignature:
+            self.fail("Double spend is not handled and therefore this should not throw")
